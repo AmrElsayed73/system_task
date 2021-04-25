@@ -1,0 +1,13 @@
+
+Iam going to make my  implemntation with Terraform . 
+
+#First I setup the  deployment for AWS agent in my working Directory 
+
+   terraform init
+   
+#Then I am going to make creation for EC2 on AWS with AMI id and security group defined for this instance , after that i will make installation for  docker on this instance,
+and pull the Rocket.chat image that given and making a connection with the mango DB as required .
+
+Here is the Terraform file that i created to setup the Resources required 
+
+
