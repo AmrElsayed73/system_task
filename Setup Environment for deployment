@@ -11,3 +11,62 @@ and pull the Rocket.chat image that given and making a connection with the mango
 Here is the Terraform file that i created to setup the Resources required 
 
 
+provider "aws" {
+  region     = "us-west-2"
+  access_key = "PUT-YOUR-ACCESS-KEY-HERE"
+  secret_key = "PUT-YOUR-SECRET-KEY-HERE"
+}
+
+resource "aws_instance" "myecs" {
+  ami = "ami-05b622b5fa0269787"
+  instance_type = "t2.micro"
+  key_name = "myseckey"
+  vpc_security_group_ids  = [aws_security_group.allow_ssh.id]
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo amazon-linux-extras install -y docker",
+      "sudo systemctl start docker",
+      "sudo systemctl enable docker",
+      "sudo docker pull rocket.chat:3.13.1",
+      "sudo docker run --name db -d mongo:4.0 mongod --smallfiles",
+      "sudo docker run --name rocketchat -p 80:3000 --link db:db -d rocket.chat:3.13.1"
+    ]
+
+  connection {
+    type = "ssh"
+    user = "ec2-user"
+    private_key = file("./myseckey.pem")
+    host = self.public_ip
+  }
+  }
+}
+
+resource "aws_security_group" "allow_ssh" {
+  name        = "ssh_ecs"
+  ingress {
+    description = "SSH into ecs"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    }
+
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    }
+
+  egress {
+  description = "Outbound Allowed"
+  from_port   = 0
+  to_port     = 65535
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
